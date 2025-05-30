@@ -3,6 +3,7 @@ const form = document.getElementById("form");
 const input = document.getElementById("input");
 const messages = document.getElementById("messages");
 const clearButton = document.getElementById("clear");
+const cancelButton = document.getElementById("cancel");
 const status = document.getElementById("status");
 
 function appendMessage(log) {
@@ -24,6 +25,11 @@ clearButton.addEventListener("click", () => {
   socket.emit("clear chat");
 });
 
+cancelButton.addEventListener("click", () => {
+  input.value = "";
+  status.textContent = "✖️ 入力は取り消されました";
+});
+
 socket.on("chat history", (logs) => {
   messages.innerHTML = "";
   logs.forEach(appendMessage);
@@ -37,5 +43,5 @@ socket.on("chat cleared", () => {
 });
 
 socket.on("click count", (remaining) => {
-  status.textContent = `🕒 あと ${remaining} 回で全消去されます。`;
+  status.textContent = `🕒 あと ${remaining} 回で履歴が全消去されます。`;
 });
