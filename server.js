@@ -10,17 +10,31 @@ const io = new Server(server);
 app.use(express.static(path.join(__dirname, "public")));
 
 let chatLog = [];
+let clearClicks = {};
 
 io.on("connection", (socket) => {
-  console.log("a user connected");
+  const ip = socket.handshake.headers["x-forwarded-for"]?.split(",")[0] || socket.handshake.address;
+
   socket.emit("chat history", chatLog);
 
   socket.on("chat message", (msg) => {
-    const timestamp = new Date().toLocaleTimeString("ja-JP", { hour12: false });
-    const log = { time: timestamp, text: msg };
+    const jstTime = new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
+    const log = { time: jstTime, ip, text: msg };
     chatLog.push(log);
     if (chatLog.length > 100) chatLog.shift();
     io.emit("chat message", log);
+  });
+
+  socket.on("clear chat", () => {
+    if (!clearClicks[ip]) clearClicks[ip] = 0;
+    clearClicks[ip]++;
+    if (clearClicks[ip] >= 5) {
+      chatLog = [];
+      clearClicks = {};
+      io.emit("chat cleared");
+    } else {
+      socket.emit("click count", 5 - clearClicks[ip]);
+    }
   });
 });
 
